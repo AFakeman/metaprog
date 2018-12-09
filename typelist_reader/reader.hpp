@@ -18,15 +18,15 @@ public:
     ReadToBuffer(in, buffer);
     return buffer;
   }
+  static void ReadToBuffer(std::istream &in, char *out);
 
 private:
-  static void ReadToBuffer(std::istream &in, char *out);
-  static char *AllocateBuffer() { return std::malloc(TypeListSizeof<TL>()); }
+  static char *AllocateBuffer() { return static_cast<char*>(std::malloc(TypeListSizeof<TL>())); }
 };
 
 template <class TL>
 void TypeListReader<TL>::ReadToBuffer(std::istream &in, char *out) {
-  typename TL::CurrentType *var = static_cast<typename TL::CurrentType>(out);
+  typename TL::CurrentType *var = reinterpret_cast<typename TL::CurrentType*>(out);
   in >> (*var);
   TypeListReader<typename TL::Tail>::ReadToBuffer(in, out + sizeof(*var));
 }
