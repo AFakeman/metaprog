@@ -5,12 +5,6 @@
 #include "typelist.hpp"
 
 namespace type_list {
-template <class TL> constexpr size_t TypeListSizeof() {
-  return sizeof(typename TL::CurrentType) + TypeListSizeof<typename TL::Tail>();
-}
-
-template <> constexpr size_t TypeListSizeof<EmptyTypeList>() { return 0; }
-
 template <class TL> class TypeListReader {
 public:
   static void *Read(std::istream &in) {

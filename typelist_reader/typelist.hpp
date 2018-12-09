@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 namespace type_list {
 struct EmptyType {};
 
@@ -78,4 +80,10 @@ template <class TL, int pos, class T> struct Replace {
 template <class TL, class T> struct Replace<TL, 0, T> {
   typedef typename Merge<T, typename TL::Tail>::Result Result;
 };
+
+template <class TL> constexpr size_t TypeListSizeof() {
+  return sizeof(typename TL::CurrentType) + TypeListSizeof<typename TL::Tail>();
+}
+
+template <> constexpr size_t TypeListSizeof<EmptyTypeList>() { return 0; }
 }; // namespace type_list
