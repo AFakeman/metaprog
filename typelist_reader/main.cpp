@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "compression_reader.hpp"
+#include "multistage_compression_reader.hpp"
 #include "reader.hpp"
 #include "typelist.hpp"
 
@@ -10,6 +11,7 @@ using MyTypeList = type_list::TypeList<int, float, char, short>;
 
 const char kSimpleFilename[] = "simple.txt";
 const char kCompressorFilename[] = "compressed.txt";
+const char kMultistageCompressorFilename[] = "multistage_compressed.txt";
 
 void print_buffer(void *raw_buf, size_t len) {
   unsigned char *buf = static_cast<unsigned char *>(raw_buf);
@@ -34,6 +36,8 @@ void test_simple_reader() {
 
 class CompressedString {
 public:
+  CompressedString() = default;
+  CompressedString(const std::string &str) : str_(str) {};
   std::string decompress() { return "*" + str_ + "*"; }
   friend std::istream &operator>>(std::istream &in, CompressedString &rhs) {
     return in >> rhs.str_;
@@ -71,6 +75,37 @@ void test_compression_reader() {
   std::cout << "### STOPPING COMPRESSION READER TEST ###" << std::endl;
 }
 
+template <class T>
+void UniversalDecompressorFunction(void *raw_buf, char *out) {
+  std::string *str = static_cast<std::string*>(raw_buf);
+  T *ptr = reinterpret_cast<T *>(out);
+  *ptr = UniversalDecompressor<T>::decompress(*str);
+}
+
+void CompressedStringFunction(void *raw_buf, char *out) {
+  std::string *str = static_cast<std::string*>(raw_buf);
+  std::string *ptr = reinterpret_cast<std::string*>(out);
+  *ptr = CompressedString(*str).decompress();
+}
+
+using MyMultistageCompressedTypeList = type_list::TypeList<int, int, std::string, std::string>;
+using MyMultistageCompressorTypeList =
+    type_list::TypeList<type_list::EmptyType, type_list::EmptyType, CompressedString, CompressedString>;
+using MyMultistageDecompressorList =
+    type_list::DecompressorList<nullptr, UniversalDecompressorFunction<int>, nullptr, CompressedStringFunction>;
+
+void test_multicompression_reader() {
+  std::cout << "### STARTING MULTICOMPRESSION READER TEST ###" << std::endl;
+  std::fstream file(kMultistageCompressorFilename, std::fstream::in);
+  void *buf =
+      type_list::TypeListMultistageCompressionReader<MyMultistageCompressedTypeList,
+                                           MyMultistageCompressorTypeList,
+                                           MyMultistageDecompressorList>::Read(file);
+  print_buffer(buf, type_list::TypeListSizeof<MyMultistageCompressedTypeList>());
+  free(buf);
+  std::cout << "### STOPPING MULTICOMPRESSION READER TEST ###" << std::endl;
+}
+
 int main() {
-  test_compression_reader();
+  test_multicompression_reader();
 }

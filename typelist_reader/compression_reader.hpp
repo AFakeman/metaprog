@@ -55,16 +55,16 @@ private:
 template <class TL, class CompressedTL, class DecompressorTL>
 void TypeListCompressionReader<TL, CompressedTL, DecompressorTL>::ReadToBuffer(
     std::istream &in, char *out) {
-  TypeListCompressionReaderHelper<typename TL::CurrentType,
-                       typename CompressedTL::CurrentType,
-                       typename DecompressorTL::CurrentType>::ReadToBuffer(in,
-                                                                           out);
+  TypeListCompressionReaderHelper<
+      typename TL::CurrentType, typename CompressedTL::CurrentType,
+      typename DecompressorTL::CurrentType>::ReadToBuffer(in, out);
   TypeListCompressionReader<typename TL::Tail, typename CompressedTL::Tail,
-                 typename DecompressorTL::Tail>::
+                            typename DecompressorTL::Tail>::
       ReadToBuffer(in, out + sizeof(typename TL::CurrentType));
 }
 
 template <>
-void TypeListCompressionReader<EmptyTypeList, EmptyTypeList, EmptyTypeList>::ReadToBuffer(
-    std::istream &in, char *out) {}
+void TypeListCompressionReader<EmptyTypeList, EmptyTypeList,
+                               EmptyTypeList>::ReadToBuffer(std::istream &in,
+                                                            char *out) {}
 } // namespace type_list
